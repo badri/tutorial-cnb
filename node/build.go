@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,32 +42,16 @@ func Build() packit.BuildFunc {
 			return packit.BuildResult{}, err
 		}
 
-		downloadDir, err := ioutil.TempDir("", "downloadDir")
-		if err != nil {
-			return packit.BuildResult{}, err
+		fmt.Println("Running npm...")
+		cmd := exec.Command("npm",
+			"install",
+		)
+		cmd.Dir = filepath.Join(context.WorkingDir, "web/themes/custom/lakshminp_theme")
+		err2 := cmd.Run()
+		
+		if err2 != nil {
+			return packit.BuildResult{}, err2
 		}
-		defer os.RemoveAll(downloadDir)
-
-		fmt.Println("Downloading dependency...")
-		err = exec.Command("curl",
-			uri,
-			"-o", filepath.Join(downloadDir, "node.tar.xz"),
-		).Run()
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-
-		fmt.Println("Untaring dependency...")
-		err = exec.Command("tar",
-			"-xf",
-			filepath.Join(downloadDir, "node.tar.xz"),
-			"--strip-components=1",
-			"-C", nodeLayer.Path,
-		).Run()
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-
 		return packit.BuildResult{
 			Plan: context.Plan,
 			Layers: []packit.Layer{
